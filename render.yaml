@@ -1,11 +1,11 @@
 services:
-  # ─── Backend FastAPI ────────────────────────────────────────────
+  # ─── Backend FastAPI (Python nativo) ────────────────────────────
   - type: web
     name: vehicleye-api
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    runtime: python
     plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -15,10 +15,10 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         value: '["https://vehicleye.onrender.com"]'
-      # URL pública del checkpoint entrenado (subir a HuggingFace Hub o GitHub Releases)
-      # Dejar vacío para arrancar con pesos ImageNet (modo demo)
       - key: MODEL_DOWNLOAD_URL
         value: ''
+      - key: PYTHON_VERSION
+        value: '3.11.0'
 
   # ─── Frontend React (Static Site) ───────────────────────────────
   - type: web
@@ -26,7 +26,6 @@ services:
     runtime: static
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: ./frontend/dist
-    plan: free
     routes:
       - type: rewrite
         source: /api/*
