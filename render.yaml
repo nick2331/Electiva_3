@@ -1,0 +1,41 @@
+services:
+  # ─── Backend FastAPI ────────────────────────────────────────────
+  - type: web
+    name: vehicleye-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vehicleye-db
+          property: connectionString
+      - key: ADMIN_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: '["https://vehicleye.onrender.com"]'
+    disk:
+      name: vehicleye-data
+      mountPath: /app/ml/checkpoints
+      sizeGB: 1
+
+  # ─── Frontend React (Static Site) ───────────────────────────────
+  - type: web
+    name: vehicleye
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: ./frontend/dist
+    plan: free
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://vehicleye-api.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: vehicleye-db
+    plan: free
+    databaseName: vehicleye

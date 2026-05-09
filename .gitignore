@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+*.pth
+*.onnx
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+dist/
+.parcel-cache/
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Uploads / generated
+backend/uploads/
+backend/reports/
+backend/gradcam_cache/
+ml/checkpoints/*.pth
+ml/runs/
+
+# DB
+*.db
+*.sqlite
