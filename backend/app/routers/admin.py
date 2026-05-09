@@ -14,7 +14,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import require_admin
-from app.models.database import get_session, engine
+from app.models.database import get_session
 from app.models.entities import Analysis
 from app.schemas.responses import DailyCount, StatsOut, TopModel
 
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(requir
 _START_TIME = time.time()
 
 
-# ─── Stats ───────────────────────────────────────────────────────────────────
+# ─── Stats ────────────────────────────────────────────────────────────────────
 
 @router.get("/stats", response_model=StatsOut)
 async def get_stats(db: AsyncSession = Depends(get_session)):
@@ -47,8 +47,10 @@ async def get_stats(db: AsyncSession = Depends(get_session)):
             model_counter[(top["brand"], top["model"])] += 1
 
     daily_counts = [
-        DailyCount(date=(today - timedelta(days=i)).isoformat(),
-                   count=day_counter.get(today - timedelta(days=i), 0))
+        DailyCount(
+            date=(today - timedelta(days=i)).isoformat(),
+            count=day_counter.get(today - timedelta(days=i), 0),
+        )
         for i in range(29, -1, -1)
     ]
 
@@ -63,10 +65,10 @@ async def get_stats(db: AsyncSession = Depends(get_session)):
                     total_analyses=total, total_images=img_count, total_videos=vid_count)
 
 
-# ─── System Health ────────────────────────────────────────────────────────────
+# ─── Health ───────────────────────────────────────────────────────────────────
 
 class ServiceStatus(BaseModel):
-    status: str          # "ok" | "warning" | "error"
+    status: str
     message: str
 
 
@@ -84,6 +86,17 @@ class HealthOut(BaseModel):
     disk_percent: float
 
 
+def _model_status() -> ServiceStatus:
+    from app.services.classifier import _session, _onnx_path
+    if _session is not None:
+        return ServiceStatus(status="ok", message="Modelo ONNX cargado en memoria")
+    if _onnx_path().exists():
+        return ServiceStatus(status="warning",
+                             message="Modelo ONNX disponible — se carga en el primer análisis")
+    return ServiceStatus(status="warning",
+                         message="Sin modelo entrenado — predicciones demo activas")
+
+
 @router.get("/health", response_model=HealthOut)
 async def system_health(db: AsyncSession = Depends(get_session)):
     uptime = int(time.time() - _START_TIME)
@@ -92,36 +105,25 @@ async def system_health(db: AsyncSession = Depends(get_session)):
     try:
         await db.execute(text("SELECT 1"))
         db_status = ServiceStatus(status="ok", message="Conexión activa")
-    except Exception as e:
-        db_status = ServiceStatus(status="error", message=str(e))
+    except Exception as exc:
+        db_status = ServiceStatus(status="error", message=str(exc)[:120])
 
     # Modelo
-    from app.services.classifier import _session as onnx_session
-    if onnx_session is not None:
-        model_status = ServiceStatus(status="ok", message="Modelo ONNX cargado en memoria")
-    else:
-        from pathlib import Path as _P
-        from app.config import settings
-        if _P(settings.model_path).with_suffix(".onnx").exists():
-            model_status = ServiceStatus(status="warning", message="Modelo ONNX disponible (se cargará en primer análisis)")
-        else:
-            model_status = ServiceStatus(status="warning", message="Sin modelo entrenado — usando predicciones demo")
+    model_status = _model_status()
 
-    # Memoria
+    # Recursos — cpu_percent con interval=None no bloquea el event loop
     mem = psutil.virtual_memory()
     mem_used = mem.used / 1024 / 1024
     mem_total = mem.total / 1024 / 1024
-    if mem.percent > 90:
-        mem_status = ServiceStatus(status="error", message=f"Memoria crítica: {mem.percent:.0f}%")
-    elif mem.percent > 75:
-        mem_status = ServiceStatus(status="warning", message=f"Memoria elevada: {mem.percent:.0f}%")
-    else:
-        mem_status = ServiceStatus(status="ok", message=f"Memoria normal: {mem.percent:.0f}%")
 
-    # Disco
+    if mem.percent > 90:
+        mem_status = ServiceStatus(status="error",   message=f"Crítica: {mem.percent:.0f} %")
+    elif mem.percent > 75:
+        mem_status = ServiceStatus(status="warning", message=f"Elevada: {mem.percent:.0f} %")
+    else:
+        mem_status = ServiceStatus(status="ok",      message=f"Normal: {mem.percent:.0f} %")
+
     disk = psutil.disk_usage("/")
-    disk_used = disk.used / 1024 / 1024
-    disk_total = disk.total / 1024 / 1024
 
     return HealthOut(
         uptime_seconds=uptime,
@@ -130,19 +132,21 @@ async def system_health(db: AsyncSession = Depends(get_session)):
         memory=mem_status,
         memory_used_mb=round(mem_used, 1),
         memory_total_mb=round(mem_total, 1),
-        memory_percent=round(mem.percent, 1),
-        cpu_percent=round(psutil.cpu_percent(interval=0.1), 1),
-        disk_used_mb=round(disk_used, 1),
-        disk_total_mb=round(disk_total, 1),
-        disk_percent=round(disk.percent, 1),
+        memory_percent=round(float(mem.percent), 1),
+        cpu_percent=round(float(psutil.cpu_percent(interval=None)), 1),
+        disk_used_mb=round(disk.used / 1024 / 1024, 1),
+        disk_total_mb=round(disk.total / 1024 / 1024, 1),
+        disk_percent=round(float(disk.percent), 1),
     )
 
 
 # ─── DB Query Executor ────────────────────────────────────────────────────────
 
-_ALLOWED_STMT = re.compile(r"^\s*(SELECT|PRAGMA|EXPLAIN|WITH)\b", re.IGNORECASE)
-_DANGEROUS    = re.compile(r"\b(DROP|DELETE|UPDATE|INSERT|ALTER|TRUNCATE|CREATE|GRANT|REVOKE)\b",
-                            re.IGNORECASE)
+_ALLOWED = re.compile(r"^\s*(SELECT|PRAGMA|EXPLAIN|WITH)\b", re.IGNORECASE)
+_BLOCKED  = re.compile(
+    r"\b(DROP|DELETE|UPDATE|INSERT|ALTER|TRUNCATE|CREATE|GRANT|REVOKE)\b",
+    re.IGNORECASE,
+)
 
 
 class QueryIn(BaseModel):
@@ -160,28 +164,30 @@ class QueryOut(BaseModel):
 async def run_query(body: QueryIn, db: AsyncSession = Depends(get_session)):
     sql = body.sql.strip()
 
-    if not _ALLOWED_STMT.match(sql):
-        raise HTTPException(400, "Solo se permiten consultas SELECT / PRAGMA / EXPLAIN / WITH.")
-    if _DANGEROUS.search(sql):
+    if not _ALLOWED.match(sql):
+        raise HTTPException(400, "Solo se permiten SELECT / PRAGMA / EXPLAIN / WITH.")
+    if _BLOCKED.search(sql):
         raise HTTPException(400, "La consulta contiene operaciones no permitidas.")
     if len(sql) > 2000:
-        raise HTTPException(400, "La consulta es demasiado larga (máx 2000 caracteres).")
+        raise HTTPException(400, "Consulta demasiado larga (máx 2000 caracteres).")
 
     try:
-        result = await db.execute(text(sql))
-        rows = result.fetchmany(200)          # máximo 200 filas
-        cols = list(result.keys()) if result.keys() else []
+        cursor = await db.execute(text(sql))
+        # keys() debe llamarse antes de fetchmany() en algunos drivers
+        cols = list(cursor.keys())
+        rows = cursor.fetchmany(200)
+        n = len(rows)
         return QueryOut(
             columns=cols,
             rows=[list(r) for r in rows],
-            row_count=len(rows),
-            message=f"{len(rows)} filas devueltas." + (" (limitado a 200)" if len(rows) == 200 else ""),
+            row_count=n,
+            message=f"{n} fila(s) devuelta(s)." + (" Limitado a 200." if n == 200 else ""),
         )
-    except Exception as e:
-        raise HTTPException(400, f"Error en la consulta: {e}")
+    except Exception as exc:
+        raise HTTPException(400, f"Error en la consulta: {exc}")
 
 
-# ─── Metrics PDF ─────────────────────────────────────────────────────────────
+# ─── Metrics ─────────────────────────────────────────────────────────────────
 
 @router.get("/metrics")
 async def download_metrics():
@@ -190,4 +196,4 @@ async def download_metrics():
         if p.exists():
             media = "application/pdf" if ext == ".pdf" else "text/plain"
             return FileResponse(str(p), media_type=media, filename=f"vehicleye_metrics{ext}")
-    raise HTTPException(404, "Reporte de métricas no disponible. Ejecute ml/evaluate.py primero.")
+    raise HTTPException(404, "Ejecute ml/evaluate.py para generar el reporte.")

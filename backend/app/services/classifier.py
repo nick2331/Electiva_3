@@ -75,9 +75,8 @@ def _preprocess(img: Image.Image) -> np.ndarray:
 # ──────────────────────────────────────────────
 
 def _onnx_path() -> Path:
-    base = Path(settings.model_path)
-    # Acepta tanto .pth (legado) como .onnx
-    return base.with_suffix(".onnx")
+    """Ruta al archivo ONNX del modelo (importable desde otros módulos)."""
+    return Path(settings.model_path).with_suffix(".onnx")
 
 
 def _maybe_download() -> None:
