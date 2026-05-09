@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
@@ -19,13 +20,25 @@ class Settings(BaseSettings):
     gradcam_dir: str = "gradcam_cache"
 
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
-    # URL pública del checkpoint .pth (HuggingFace Hub, GitHub Releases, etc.)
-    # Si está vacía el servidor arranca con pesos ImageNet (modo demo).
     model_download_url: str = ""
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def fix_db_url(cls, v: str) -> str:
+        # Render entrega postgresql:// pero SQLAlchemy async necesita postgresql+asyncpg://
+        if isinstance(v, str) and v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # También manejar postgres:// (alias antiguo de Render)
+        if isinstance(v, str) and v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        return v
 
     def model_post_init(self, __context):
         for d in (self.upload_dir, self.reports_dir, self.gradcam_dir):
-            Path(d).mkdir(parents=True, exist_ok=True)
+            try:
+                Path(d).mkdir(parents=True, exist_ok=True)
+            except OSError:
+                pass  # En entornos de solo lectura no bloqueamos el arranque
 
 
 settings = Settings()

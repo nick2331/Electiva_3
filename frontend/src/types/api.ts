@@ -15,6 +15,7 @@ export interface AnalysisResult {
   gradcam_url: string | null
   report_url: string
   created_at: string
+  thumbnail_b64: string | null
 }
 
 export interface HistoryItem {
