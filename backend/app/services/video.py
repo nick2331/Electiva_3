@@ -15,10 +15,6 @@ from PIL import Image
 from app.services.classifier import Prediction, predict_pil, NUM_CLASSES, VEHICLE_CLASSES
 from app.config import settings
 
-import torch
-import timm
-from torchvision import transforms
-
 
 def _consolidate(frame_results: list[list[Prediction]]) -> list[Prediction]:
     """
