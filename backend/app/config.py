@@ -22,6 +22,14 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["*"]
     model_download_url: str = ""
 
+    # API externa para clasificar vehículos sin entrenar modelo propio.
+    #   external_api_provider: "huggingface" | "imagenet" | ""  (vacío = desactivado)
+    #   huggingface_token:     token gratuito de huggingface.co (opcional para imagenet)
+    #   huggingface_model:     modelo a usar (default: car_models_image_detection)
+    external_api_provider: str = ""
+    huggingface_token: str = ""
+    huggingface_model: str = "dima806/car_models_image_detection"
+
     @field_validator("database_url", mode="before")
     @classmethod
     def fix_db_url(cls, v: str) -> str:

@@ -87,12 +87,22 @@ class HealthOut(BaseModel):
 
 
 def _model_status() -> ServiceStatus:
+    from app.config import settings as _s
     from app.services.classifier import _session, _onnx_path
     if _session is not None:
         return ServiceStatus(status="ok", message="Modelo ONNX cargado en memoria")
     if _onnx_path().exists():
         return ServiceStatus(status="warning",
                              message="Modelo ONNX disponible — se carga en el primer análisis")
+    provider = (getattr(_s, "external_api_provider", "") or "").lower()
+    if provider == "huggingface":
+        model = getattr(_s, "huggingface_model", "")
+        token = "✓" if getattr(_s, "huggingface_token", "") else "✗ (sin token)"
+        return ServiceStatus(status="ok",
+                             message=f"API externa Hugging Face: {model} · token {token}")
+    if provider == "imagenet":
+        return ServiceStatus(status="ok",
+                             message="API externa ImageNet (microsoft/resnet-50) activa")
     return ServiceStatus(status="warning",
                          message="Sin modelo entrenado — predicciones demo activas")
 

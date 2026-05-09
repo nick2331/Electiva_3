@@ -186,6 +186,33 @@ def _detect_non_vehicle(image_bytes: bytes) -> bool:
         return False
 
 
+def _try_external_api(image_bytes: bytes) -> list[Prediction] | None:
+    """
+    Llama al proveedor externo (Hugging Face / ImageNet) si está configurado.
+    Devuelve:
+      * lista de Predictions (top-3) si la API clasificó algo
+      * lista vacía []  si la API decidió que NO es un vehículo
+      * None  si no está configurada o falló
+    """
+    try:
+        from app.services.external_classifier import classify_external
+        results = classify_external(image_bytes)
+    except Exception as exc:
+        print(f"API externa falló: {exc}")
+        return None
+
+    if results is None:
+        return None
+    if results == []:
+        return []  # señal explícita: la API dijo "no es un vehículo"
+
+    return [
+        Prediction(rank=i + 1, brand=brand, model=model,
+                   confidence=round(float(score), 4))
+        for i, (brand, model, score) in enumerate(results[:3])
+    ]
+
+
 def predict_bytes(image_bytes: bytes) -> list[Prediction]:
     sess = get_session()
 
@@ -195,7 +222,12 @@ def predict_bytes(image_bytes: bytes) -> list[Prediction]:
 
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
+    # Si no hay modelo ONNX local, intenta API externa (Hugging Face).
+    # Si la API tampoco está configurada, cae a predicciones demo.
     if sess is None:
+        ext = _try_external_api(image_bytes)
+        if ext is not None:
+            return ext
         return _demo_predictions()
 
     tensor = _preprocess(img)
