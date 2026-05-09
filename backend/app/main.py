@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.models.database import init_db
@@ -11,10 +10,10 @@ from app.routers import analyze, history, results, admin
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Solo inicializa la DB al arrancar. El modelo se carga de forma lazy en el
+    # primer request de análisis para que el health check responda rápido y
+    # Render no mate el proceso por timeout durante el cold start.
     await init_db()
-    # Carga el modelo en memoria al arrancar para que el primer request no pague el costo
-    from app.services.classifier import get_model
-    get_model()
     yield
 
 
