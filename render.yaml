@@ -15,10 +15,10 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         value: '["https://vehicleye.onrender.com"]'
-    disk:
-      name: vehicleye-data
-      mountPath: /app/ml/checkpoints
-      sizeGB: 1
+      # URL pública del checkpoint entrenado (subir a HuggingFace Hub o GitHub Releases)
+      # Dejar vacío para arrancar con pesos ImageNet (modo demo)
+      - key: MODEL_DOWNLOAD_URL
+        value: ''
 
   # ─── Frontend React (Static Site) ───────────────────────────────
   - type: web

@@ -2,13 +2,14 @@
 Inferencia EfficientNet-B0.
 
 Al arrancar el servidor se carga el modelo una sola vez en memoria.
-Si el checkpoint no existe todavía (antes del primer entrenamiento),
-se usan los pesos ImageNet con cabeza lineal aleatoria, lo que permite
-probar el pipeline completo sin bloquear el arranque.
+Si el checkpoint no existe localmente y MODEL_DOWNLOAD_URL está configurada,
+se descarga automáticamente (compatible con Render free tier sin disco).
+Si no hay checkpoint disponible se usan pesos ImageNet (modo demo).
 """
 from __future__ import annotations
 
 import io
+import urllib.request
 from pathlib import Path
 from typing import NamedTuple
 
@@ -18,6 +19,23 @@ from PIL import Image
 from torchvision import transforms
 
 from app.config import settings
+
+
+def _maybe_download_checkpoint() -> None:
+    """Descarga el checkpoint si MODEL_DOWNLOAD_URL está definida y el archivo no existe."""
+    url = getattr(settings, "model_download_url", "")
+    if not url:
+        return
+    ckpt = Path(settings.model_path)
+    if ckpt.exists():
+        return
+    ckpt.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Descargando checkpoint desde {url} …")
+    try:
+        urllib.request.urlretrieve(url, str(ckpt))
+        print("Checkpoint descargado correctamente.")
+    except Exception as e:
+        print(f"No se pudo descargar el checkpoint: {e}. Se usarán pesos ImageNet.")
 
 
 VEHICLE_CLASSES: list[tuple[str, str]] = [
@@ -63,6 +81,7 @@ class Prediction(NamedTuple):
 
 
 def _build_model() -> torch.nn.Module:
+    _maybe_download_checkpoint()
     net = timm.create_model("efficientnet_b0", pretrained=False, num_classes=NUM_CLASSES)
     ckpt = Path(settings.model_path)
     if ckpt.exists():

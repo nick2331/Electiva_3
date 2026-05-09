@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     gradcam_dir: str = "gradcam_cache"
 
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
+    # URL pública del checkpoint .pth (HuggingFace Hub, GitHub Releases, etc.)
+    # Si está vacía el servidor arranca con pesos ImageNet (modo demo).
+    model_download_url: str = ""
 
     def model_post_init(self, __context):
         for d in (self.upload_dir, self.reports_dir, self.gradcam_dir):
