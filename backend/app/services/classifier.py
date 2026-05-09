@@ -143,8 +143,56 @@ def _demo_predictions() -> list[Prediction]:
     ]
 
 
+def _detect_non_vehicle(image_bytes: bytes) -> bool:
+    """
+    Heurística rápida sin modelo entrenado:
+      - Detecta caras humanas con Haar cascade (cv2). Si hay una cara
+        relativamente grande (>= 8 % del lado más corto), asumimos que
+        la imagen es de una persona, no de un vehículo.
+      - Revisa también la cantidad de píxeles con tono de piel; si más
+        del 18 % de la imagen es piel humana, probablemente no es un
+        vehículo.
+    Devuelve True si decide que NO es un vehículo.
+    """
+    try:
+        import cv2
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if img_bgr is None:
+            return False
+        h, w = img_bgr.shape[:2]
+        short_side = min(h, w)
+
+        gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+        cascade = cv2.CascadeClassifier(cascade_path)
+        min_face = max(40, short_side // 12)
+        faces = cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=5, minSize=(min_face, min_face)
+        )
+        for (_, _, fw, fh) in faces:
+            if max(fw, fh) >= short_side * 0.08:
+                return True
+
+        # Tono de piel en espacio YCrCb (rangos aceptados en literatura).
+        ycrcb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2YCrCb)
+        skin_mask = cv2.inRange(ycrcb, (0, 133, 77), (255, 173, 127))
+        skin_ratio = float(skin_mask.sum()) / (255.0 * h * w)
+        if skin_ratio > 0.18:
+            return True
+
+        return False
+    except Exception:
+        return False
+
+
 def predict_bytes(image_bytes: bytes) -> list[Prediction]:
     sess = get_session()
+
+    # Filtro previo: descartar fotos de personas antes de clasificar.
+    if _detect_non_vehicle(image_bytes):
+        return []
+
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
     if sess is None:
