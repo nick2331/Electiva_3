@@ -5,7 +5,7 @@ import io
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 from PIL import Image
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
@@ -34,9 +34,9 @@ def _pil_to_b64(img: Image.Image, size: tuple[int, int] = (128, 80)) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
-def _build_analysis_out(analysis: Analysis, request_base_url: str) -> AnalysisOut:
+def _build_analysis_out(analysis: Analysis, base_url: str) -> AnalysisOut:
     preds = [PredictionItem(**p) for p in analysis.predictions]
-    base = request_base_url.rstrip("/")
+    base = base_url.rstrip("/")
     return AnalysisOut(
         analysis_id=analysis.id,
         input_type=analysis.input_type,
@@ -52,6 +52,7 @@ def _build_analysis_out(analysis: Analysis, request_base_url: str) -> AnalysisOu
 
 @router.post("/image", response_model=AnalysisOut, status_code=status.HTTP_201_CREATED)
 async def analyze_image(
+    request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_session),
 ):
@@ -92,14 +93,17 @@ async def analyze_image(
             gradcam_filename = None
 
     preds_items = [PredictionItem(**p) for p in preds_dicts]
-    report_filename = generate_pdf(
-        analysis_id=analysis_id,
-        input_type="image",
-        predictions=preds_items,
-        description_es=description,
-        no_vehicle=no_vehicle,
-        thumbnail_b64=thumbnail_b64,
-    )
+    try:
+        report_filename = generate_pdf(
+            analysis_id=analysis_id,
+            input_type="image",
+            predictions=preds_items,
+            description_es=description,
+            no_vehicle=no_vehicle,
+            thumbnail_b64=thumbnail_b64,
+        )
+    except Exception:
+        report_filename = None
 
     analysis = Analysis(
         id=analysis_id,
@@ -116,11 +120,13 @@ async def analyze_image(
     await db.commit()
     await db.refresh(analysis)
 
-    return _build_analysis_out(analysis, "http://localhost:8000/api/v1")
+    base_url = str(request.base_url).rstrip("/") + "/api/v1"
+    return _build_analysis_out(analysis, base_url)
 
 
 @router.post("/video", response_model=AnalysisOut, status_code=status.HTTP_201_CREATED)
 async def analyze_video(
+    request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_session),
 ):
@@ -143,14 +149,17 @@ async def analyze_video(
     analysis_id = str(uuid.uuid4())
 
     preds_items = [PredictionItem(**p) for p in preds_dicts]
-    report_filename = generate_pdf(
-        analysis_id=analysis_id,
-        input_type="video",
-        predictions=preds_items,
-        description_es=description,
-        no_vehicle=no_vehicle,
-        thumbnail_b64=thumbnail_b64,
-    )
+    try:
+        report_filename = generate_pdf(
+            analysis_id=analysis_id,
+            input_type="video",
+            predictions=preds_items,
+            description_es=description,
+            no_vehicle=no_vehicle,
+            thumbnail_b64=thumbnail_b64,
+        )
+    except Exception:
+        report_filename = None
 
     analysis = Analysis(
         id=analysis_id,
@@ -167,4 +176,5 @@ async def analyze_video(
     await db.commit()
     await db.refresh(analysis)
 
-    return _build_analysis_out(analysis, "http://localhost:8000/api/v1")
+    base_url = str(request.base_url).rstrip("/") + "/api/v1"
+    return _build_analysis_out(analysis, base_url)

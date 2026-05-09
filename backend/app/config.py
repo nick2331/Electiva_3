@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     reports_dir: str = "reports"
     gradcam_dir: str = "gradcam_cache"
 
-    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
+    cors_origins: list[str] = ["*"]
     model_download_url: str = ""
 
     @field_validator("database_url", mode="before")

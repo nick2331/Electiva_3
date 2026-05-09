@@ -53,6 +53,7 @@ def _saliency_map(image_bytes: bytes) -> str:
 
     filename = f"gradcam_{uuid.uuid4().hex}.png"
     out_path = Path(settings.gradcam_dir) / filename
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_img.save(out_path, format="PNG")
     return filename
 
@@ -61,5 +62,6 @@ def _save_original(image_bytes: bytes) -> str:
     pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((224, 224))
     filename = f"gradcam_{uuid.uuid4().hex}.png"
     out_path = Path(settings.gradcam_dir) / filename
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     pil_img.save(out_path, format="PNG")
     return filename

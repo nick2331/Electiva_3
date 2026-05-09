@@ -136,14 +136,19 @@ def generate_pdf(
 
     filename = f"report_{analysis_id}.pdf"
     out_path = Path(settings.reports_dir) / filename
-    HTML(string=html_content).write_pdf(str(out_path))
-    return filename
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        HTML(string=html_content).write_pdf(str(out_path))
+        return filename
+    except Exception:
+        return _txt_fallback(analysis_id, predictions, description_es)
 
 
 def _txt_fallback(analysis_id: str, predictions: list[PredictionItem], description_es: str) -> str:
     """Si WeasyPrint no está disponible, genera un archivo de texto plano como placeholder."""
     filename = f"report_{analysis_id}.txt"
     out_path = Path(settings.reports_dir) / filename
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [f"VehiclEye — Reporte {analysis_id}", "=" * 50]
     for p in predictions:
         lines.append(f"  #{p.rank}  {p.brand} {p.model}  —  {round(p.confidence*100,1)} %")
