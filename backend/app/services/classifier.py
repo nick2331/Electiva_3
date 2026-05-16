@@ -80,11 +80,25 @@ def _onnx_path() -> Path:
 
 
 def _maybe_download() -> None:
-    url = getattr(settings, "model_download_url", "")
-    if not url:
-        return
     dst = _onnx_path()
     if dst.exists():
+        return
+
+    # Busca el archivo en rutas locales conocidas (p.ej. backend/vehicleye.onnx)
+    _here = Path(__file__).resolve().parent.parent.parent  # directorio backend/
+    for candidate in [
+        _here / "vehicleye.onnx",
+        Path("vehicleye.onnx"),
+    ]:
+        if candidate.exists():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            import shutil
+            shutil.copy2(str(candidate), str(dst))
+            print(f"Modelo ONNX copiado desde {candidate}.")
+            return
+
+    url = getattr(settings, "model_download_url", "")
+    if not url:
         return
     dst.parent.mkdir(parents=True, exist_ok=True)
     print(f"Descargando modelo ONNX desde {url} …")
