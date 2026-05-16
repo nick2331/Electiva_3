@@ -109,16 +109,36 @@ class VehiclEyeDataset(Dataset):
 
 
 def _dir_to_label(dir_name: str) -> tuple[str, str] | None:
-    """Convierte un nombre de directorio como 'toyota_corolla' en ('Toyota', 'Corolla')."""
-    parts = dir_name.split("_")
+    """
+    Convierte un nombre de directorio a (brand, model).
+
+    Soporta dos formatos:
+      • toyota_corolla        → ('Toyota', 'Corolla')
+      • renault_stepway       → ('Renault', 'Stepway')
+      • mazda_cx5             → ('Mazda', 'CX-5')
+      • volkswagen_gol        → ('Volkswagen', 'Gol')
+    """
+    parts = dir_name.lower().replace('-', '').replace('.', '').split('_')
     if len(parts) < 2:
         return None
     brand = parts[0].capitalize()
-    model = " ".join(p.capitalize() for p in parts[1:])
-    # Casos especiales
-    model_map = {"Cx5": "CX-5", "Gol": "Gol", "Cx 5": "CX-5"}
-    model = model_map.get(model, model)
-    return (brand, model)
+    model_raw = ' '.join(p.capitalize() for p in parts[1:])
+    # Casos especiales para nombres compuestos o abreviados
+    model_map = {
+        'Cx5':  'CX-5',
+        'Cx 5': 'CX-5',
+        '3':    '3',
+    }
+    model = model_map.get(model_raw, model_raw)
+    pair = (brand, model)
+    # Valida que el par exista en el catálogo
+    if pair in CLASS_TO_IDX:
+        return pair
+    # Fallback: match por brand + primer token del modelo
+    for b, m in CLASS_TO_IDX:
+        if b.lower() == brand.lower() and m.lower().replace('-', '').replace(' ', '') == model_raw.lower().replace(' ', ''):
+            return (b, m)
+    return None
 
 
 if __name__ == "__main__":
