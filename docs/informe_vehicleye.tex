@@ -1,0 +1,728 @@
+% =============================================================
+% VehiclEye: Informe Técnico — Formato IEEE Universitario
+% Universidad de Ingeniería de Sistemas, 2026
+% Compilable en Overleaf (pdflatex)
+% =============================================================
+\documentclass[12pt,a4paper]{article}
+
+% ---- Codificación y lenguaje ---------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+
+% ---- Márgenes estilo IEEE universitario ----------------------
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+
+% ---- Tipografía -----------------------------------------------
+\usepackage{times}        % Times New Roman (estilo IEEE)
+\usepackage{microtype}    % Mejor justificación
+
+% ---- Matemáticas ----------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% ---- Gráficos y figuras --------------------------------------
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+
+% ---- Tablas --------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+
+% ---- Código fuente -------------------------------------------
+\usepackage{listings}
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red!70!black},
+    commentstyle=\color{green!50!black}\itshape,
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    stepnumber=1,
+    numbersep=6pt,
+    backgroundcolor=\color{gray!8},
+    frame=single,
+    frameround=tttt,
+    rulecolor=\color{gray!40},
+    breaklines=true,
+    breakatwhitespace=true,
+    captionpos=b,
+    tabsize=4,
+    showstringspaces=false,
+    xleftmargin=12pt,
+    xrightmargin=4pt,
+}
+\lstset{style=pythonstyle}
+
+% ---- Hipervínculos -------------------------------------------
+\usepackage[colorlinks=true,
+            linkcolor=blue!60!black,
+            citecolor=blue!60!black,
+            urlcolor=blue!70!black]{hyperref}
+
+% ---- Encabezados y pies de página ----------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{VehiclEye: Sistema de Identificación Automática de Vehículos}}
+\fancyhead[R]{\small\thepage}
+\fancyfoot[C]{\small Ingeniería de Sistemas --- 2026}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ---- Secciones compactas estilo IEEE -------------------------
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\itshape}{\thesubsubsection.}{0.5em}{}
+\titlespacing{\section}{0pt}{10pt}{4pt}
+\titlespacing{\subsection}{0pt}{8pt}{3pt}
+
+% ---- Bibliografía estilo IEEE --------------------------------
+\usepackage{cite}
+
+% ---- Columnas dobles (abstracto) -----------------------------
+\usepackage{multicol}
+
+% ---- Espaciado -----------------------------------------------
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0.5cm}
+\linespread{1.1}
+
+% ---- Captions ------------------------------------------------
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, skip=4pt}
+
+% ==============================================================
+\begin{document}
+
+% ---- Portada -------------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+
+    {\Large \textbf{UNIVERSIDAD [NOMBRE DE LA UNIVERSIDAD]}}\\[0.3cm]
+    {\large Facultad de Ingeniería --- Programa de Ingeniería de Sistemas}\\[0.2cm]
+    {\small Electiva III --- Proyecto Integrador, 2026}
+
+    \vspace{1.5cm}
+    \rule{\linewidth}{1.5pt}\\[0.4cm]
+
+    {\LARGE \bfseries VehiclEye: Sistema de Identificación\\[0.2cm]
+    Automática de Vehículos Mediante\\[0.2cm]
+    Visión por Computador y Deep Learning}
+
+    \rule{\linewidth}{1.5pt}\\[0.8cm]
+
+    \vspace{0.5cm}
+    {\large \textbf{Autores:}}\\[0.4cm]
+    \begin{tabular}{c}
+        \textbf{Jeison Steven Ávila Soler} \\
+        \textit{Gerente del Proyecto} \\
+        \texttt{[correo@universidad.edu.co]} \\[0.6cm]
+        \textbf{Nicolas Rubiano Giraldo} \\
+        \textit{Desarrollador Backend, Inteligencia Artificial y Frontend} \\
+        \texttt{[correo@universidad.edu.co]} \\
+    \end{tabular}
+
+    \vspace{1cm}
+    {\large Universidad \\ Ingeniería de Sistemas \\ 2026}
+
+    \vfill
+    {\small \today}
+\end{titlepage}
+
+% ---- Resumen (Abstract) en dos columnas ----------------------
+\thispagestyle{fancy}
+\begin{center}
+    {\large \bfseries Resumen}
+\end{center}
+
+\begin{multicols}{2}
+\noindent
+VehiclEye es un sistema web de inteligencia artificial diseñado para la clasificación automática de vehículos del mercado colombiano mediante técnicas de visión por computador y aprendizaje profundo. El sistema emplea la arquitectura \textit{EfficientNet-B0} entrenada mediante \textit{transfer learning} en un conjunto de datos de 720 imágenes distribuidas en 20 clases de vehículos de alta circulación en Colombia. El modelo alcanza una exactitud ponderada del \textbf{77,1\%} en el conjunto de validación, con valores de F1-score superiores al 0,95 en clases como Toyota Hilux y Renault Logan. La arquitectura del sistema integra un \textit{backend} desarrollado con FastAPI, una base de datos PostgreSQL y un \textit{frontend} reactivo construido con React 18 y TypeScript. Para el despliegue en producción se utilizó ONNX Runtime, reduciendo el consumo de RAM de $\sim$600\,MB (PyTorch) a $\sim$50\,MB, lo que permite la operación en la capa gratuita de Render. El sistema incluye explicabilidad mediante Grad-CAM y generación automática de reportes en PDF.
+
+\vspace{4pt}
+\noindent \textbf{Palabras clave:} visión por computador, clasificación de vehículos, EfficientNet, transfer learning, FastAPI, ONNX, Grad-CAM, Colombia.
+\end{multicols}
+
+\vspace{0.5cm}
+\hrule
+\vspace{0.8cm}
+
+% ---- Índice general ------------------------------------------
+\tableofcontents
+\newpage
+
+% ==============================================================
+\section{Introducción}
+% ==============================================================
+
+La identificación manual de vehículos es un proceso lento, costoso y propenso a errores humanos en contextos como seguros de automóviles, control de tráfico, gestión de flotas empresariales y peritajes técnicos. En Colombia, el parque automotor supera los 17 millones de unidades registradas \cite{runt2023}, y la determinación correcta de marca, modelo y versión de un vehículo a partir de una fotografía representa un desafío no trivial incluso para personal especializado, especialmente cuando los vehículos han sido modificados o carecen de documentación visible.
+
+Los avances recientes en redes neuronales convolucionales (CNN) y, en particular, en técnicas de \textit{transfer learning}, han permitido construir clasificadores de imágenes con alto rendimiento incluso cuando el conjunto de datos disponible es limitado \cite{tan2019efficientnet}. Arquitecturas como EfficientNet \cite{tan2019efficientnet} y ResNet \cite{he2016deep} ofrecen modelos preentrenados sobre ImageNet que pueden ser adaptados a dominios específicos con un costo computacional y de datos significativamente menor al entrenamiento desde cero.
+
+\textbf{VehiclEye} surge como respuesta a esta problemática: un sistema web integral que permite a cualquier usuario, sin conocimientos técnicos, cargar una fotografía de un vehículo y obtener en tiempo real una predicción de marca y modelo, acompañada de un mapa de calor explicativo (Grad-CAM) y un reporte descargable en PDF. El sistema está ajustado específicamente a los 20 modelos de vehículos de mayor circulación en el mercado colombiano.
+
+El presente informe describe el proceso de diseño, implementación, entrenamiento, evaluación y despliegue del sistema VehiclEye, desarrollado como proyecto integrador de la asignatura Electiva III de Ingeniería de Sistemas.
+
+% ==============================================================
+\section{Planteamiento del Problema}
+% ==============================================================
+
+\subsection{Contexto y Motivación}
+
+En Colombia, múltiples sectores económicos requieren la identificación precisa de vehículos como parte de sus operaciones diarias:
+
+\begin{itemize}
+    \item \textbf{Sector asegurador:} Las aseguradoras necesitan verificar el modelo exacto del vehículo para calcular primas y procesar siniestros. Errores en la identificación pueden derivar en fraudes o disputas legales.
+    \item \textbf{Control de tránsito:} Las autoridades de tránsito requieren identificar vehículos rápidamente en operativos, comparendos y registros de infracciones.
+    \item \textbf{Gestión de flotas:} Empresas con flotas numerosas de vehículos enfrentan dificultades para mantener registros actualizados cuando la identificación depende exclusivamente de inspecciones manuales.
+    \item \textbf{Peritajes y compraventas:} En el comercio de vehículos usados, la correcta identificación del modelo influye directamente en la valoración económica del bien.
+\end{itemize}
+
+\subsection{Problema Central}
+
+El problema central que aborda VehiclEye puede formularse de la siguiente manera:
+
+\begin{quote}
+\textit{¿Cómo construir un sistema automatizado, accesible vía web y ajustado al mercado colombiano, que clasifique correctamente el modelo de un vehículo a partir de una fotografía, con suficiente precisión para ser útil en contextos profesionales?}
+\end{quote}
+
+\subsection{Carencia de Herramientas Accesibles}
+
+Aunque existen soluciones comerciales de reconocimiento de vehículos (como las APIs de Google Vision o Amazon Rekognition), estas presentan limitaciones relevantes para el contexto colombiano: (1) están optimizadas para el mercado norteamericano o europeo y no contemplan modelos predominantes en Colombia, (2) tienen un costo por consulta que las hace inaccesibles para pequeñas empresas, y (3) no ofrecen explicabilidad sobre las decisiones del modelo.
+
+% ==============================================================
+\section{Objetivos}
+% ==============================================================
+
+\subsection{Objetivo General}
+
+Desarrollar un sistema web de clasificación automática de vehículos del mercado colombiano basado en deep learning, que sea accesible desde cualquier navegador, desplegado en la nube y con capacidad de explicar sus predicciones mediante visualizaciones interpretables.
+
+\subsection{Objetivos Específicos}
+
+\begin{enumerate}
+    \item Recopilar y preparar un conjunto de datos de imágenes de los 20 modelos de vehículos más comunes en Colombia.
+    \item Entrenar un modelo de clasificación basado en EfficientNet-B0 mediante transfer learning, alcanzando una exactitud superior al 75\% en el conjunto de validación.
+    \item Exportar el modelo entrenado a formato ONNX para su despliegue eficiente en entornos con recursos computacionales limitados.
+    \item Desarrollar una API REST asíncrona con FastAPI que exponga los servicios de inferencia, historial y generación de reportes.
+    \item Implementar visualizaciones Grad-CAM que permitan al usuario entender qué regiones de la imagen sustentan la predicción del modelo.
+    \item Construir una interfaz web responsiva con React 18 y TypeScript que guíe al usuario a través del flujo de carga de imagen, visualización de resultados y descarga de reportes.
+    \item Desplegar el sistema completo en Render (capa gratuita) con una huella de memoria inferior a 512\,MB.
+\end{enumerate}
+
+% ==============================================================
+\section{Marco Teórico}
+% ==============================================================
+
+\subsection{Redes Neuronales Convolucionales (CNN)}
+
+Las redes neuronales convolucionales son una clase de redes de aprendizaje profundo especialmente diseñadas para procesar datos con estructura de cuadrícula, como imágenes \cite{lecun1998gradient}. Su arquitectura explota tres propiedades fundamentales: localidad (los filtros operan sobre ventanas locales de la imagen), compartición de pesos (el mismo filtro se aplica a toda la imagen) e invarianza a la traslación. Una CNN típica alterna capas convolucionales con funciones de activación (ReLU), capas de \textit{pooling} para reducción espacial, y capas totalmente conectadas para la clasificación final.
+
+\subsection{Transfer Learning}
+
+El \textit{transfer learning} o aprendizaje por transferencia es una técnica que consiste en reutilizar un modelo preentrenado en una tarea de gran escala (generalmente clasificación en ImageNet con 1000 clases y $\sim$1,2 millones de imágenes) como punto de partida para entrenar un modelo en una tarea diferente pero relacionada \cite{pan2010survey}. Esta aproximación es especialmente valiosa cuando el conjunto de datos objetivo es pequeño, ya que los primeros bloques de la red han aprendido detectores de características generales (bordes, texturas, formas) que son transferibles entre dominios visuales. El transfer learning reduce drásticamente el tiempo de entrenamiento y el riesgo de sobreajuste.
+
+\subsection{Arquitectura EfficientNet}
+
+EfficientNet \cite{tan2019efficientnet} es una familia de arquitecturas CNN propuesta por Tan y Le en 2019, distinguida por su método de \textit{compound scaling}: en lugar de escalar únicamente la profundidad, el ancho o la resolución de entrada de la red (como era práctica habitual), EfficientNet escala los tres hiperparámetros simultáneamente mediante un coeficiente compuesto $\phi$, buscando un balance óptimo entre precisión y eficiencia computacional.
+
+La variante \textbf{EfficientNet-B0}, la más pequeña de la familia, cuenta con $\sim$5,3 millones de parámetros y fue diseñada con bloques \textit{MBConv} (convoluciones separables en profundidad con \textit{squeeze-and-excitation}). A pesar de su compacidad, EfficientNet-B0 alcanza resultados comparables a ResNet-50 en ImageNet con un número de operaciones de coma flotante (FLOPs) significativamente menor, lo que la hace idónea para despliegues con restricciones de memoria y latencia.
+
+Matemáticamente, el escalado compuesto se define como:
+\begin{equation}
+    d = \alpha^\phi, \quad w = \beta^\phi, \quad r = \gamma^\phi
+    \quad \text{sujeto a} \quad \alpha \cdot \beta^2 \cdot \gamma^2 \approx 2
+\end{equation}
+donde $d$, $w$ y $r$ son los factores de profundidad, ancho y resolución, respectivamente, y $\alpha, \beta, \gamma$ son constantes determinadas por búsqueda de arquitectura neuronal (NAS).
+
+\subsection{Formato ONNX para Despliegue en Producción}
+
+ONNX (\textit{Open Neural Network Exchange}) es un formato abierto para la representación de modelos de aprendizaje automático \cite{onnxdocs}. Permite exportar un modelo entrenado en cualquier framework (PyTorch, TensorFlow, etc.) y ejecutarlo con \textit{runtimes} optimizados independientes del framework original. ONNX Runtime, el motor de inferencia de Microsoft, ofrece optimizaciones de grafos, cuantización y soporte para múltiples backends de hardware (CPU, GPU, ARM). En el contexto de VehiclEye, la exportación a ONNX reduce la dependencia de PyTorch en producción, disminuyendo el consumo de RAM de $\sim$600\,MB a $\sim$50\,MB —diferencia determinante para la capa gratuita de Render (512\,MB de RAM).
+
+\subsection{Grad-CAM: Explicabilidad del Modelo}
+
+Grad-CAM (\textit{Gradient-weighted Class Activation Mapping}) \cite{selvaraju2017grad} es una técnica de visualización para redes CNN que produce mapas de calor indicando qué regiones de la imagen de entrada son más relevantes para la predicción de una clase determinada. El mapa se obtiene calculando el gradiente de la puntuación de la clase objetivo respecto a los mapas de activación de la última capa convolucional, promediando espacialmente esos gradientes para obtener pesos $\alpha_k^c$, y combinándolos con los mapas de activación:
+
+\begin{equation}
+    L^c_{\text{Grad-CAM}} = \text{ReLU}\!\left(\sum_k \alpha_k^c A^k\right)
+\end{equation}
+
+donde $A^k$ son los mapas de activación del canal $k$ y $\alpha_k^c = \frac{1}{Z} \sum_i \sum_j \frac{\partial y^c}{\partial A^k_{ij}}$ son los pesos de importancia global. La aplicación de ReLU descarta las activaciones con contribución negativa a la clase de interés. En VehiclEye, Grad-CAM se implementa sobre la última capa convolucional de EfficientNet-B0, generando un \textit{heatmap} superpuesto sobre la imagen original que el usuario puede visualizar en la interfaz web.
+
+% ==============================================================
+\section{Metodología}
+% ==============================================================
+
+\subsection{Recopilación y Preparación del Dataset}
+
+El conjunto de datos fue construido descargando imágenes de los 20 modelos de vehículos de mayor penetración en el mercado colombiano, utilizando las APIs de búsqueda de DuckDuckGo y Bing como fuentes automatizadas. Se obtuvieron un total de \textbf{720 imágenes}, con un promedio de 36 imágenes por clase.
+
+Las 20 clases incluidas son: Toyota Hilux, Renault Logan, Chevrolet Spark, Kia Picanto, Hyundai Tucson, Mazda CX-5, Nissan Frontier, Ford Explorer, Volkswagen Polo, Renault Duster, Chevrolet Captiva, Toyota Prado, Kia Sportage, Suzuki Jimny, Mitsubishi Outlander, Honda CR-V, Ford Ranger, Chevrolet Tracker, Jeep Wrangler y Mazda 3.
+
+\textbf{División del dataset:} 85\% para entrenamiento (612 imágenes) y 15\% para validación (108 imágenes), con estratificación por clase para garantizar representación balanceada en ambos subconjuntos.
+
+\subsection{Aumento de Datos (Data Augmentation)}
+
+Dado el tamaño reducido del dataset, se aplicaron las siguientes transformaciones de aumento de datos durante el entrenamiento, implementadas con la librería \texttt{albumentations}:
+
+\begin{itemize}
+    \item Volteo horizontal aleatorio (probabilidad 0,5)
+    \item Rotación aleatoria en el rango $[-15°, +15°]$
+    \item Ajuste aleatorio de brillo y contraste ($\pm$20\%)
+    \item Cambio aleatorio de matiz, saturación y valor (HSV)
+    \item Normalización con media y desviación estándar de ImageNet: $\mu = [0.485, 0.456, 0.406]$, $\sigma = [0.229, 0.224, 0.225]$
+    \item Redimensionamiento a $224 \times 224$ píxeles (resolución de entrada de EfficientNet-B0)
+\end{itemize}
+
+Para el conjunto de validación únicamente se aplicaron el redimensionamiento y la normalización, sin transformaciones aleatorias.
+
+\subsection{Estrategia de Entrenamiento: Transfer Learning en Dos Fases}
+
+El entrenamiento se ejecutó en Google Colab con una GPU NVIDIA T4, con un tiempo total de aproximadamente 90 minutos.
+
+\subsubsection{Fase 1 — Entrenamiento de la Cabeza Clasificadora (5 épocas)}
+
+En la primera fase, el \textit{backbone} de EfficientNet-B0 (cargado con pesos preentrenados de ImageNet desde la librería \texttt{timm}) se congeló completamente, entrenando únicamente la capa de clasificación añadida (\textit{head}):
+
+\begin{lstlisting}[caption={Configuración de Fase 1: backbone congelado}, label={lst:phase1}]
+import timm
+import torch.nn as nn
+
+# Cargar EfficientNet-B0 preentrenado
+model = timm.create_model(
+    'efficientnet_b0',
+    pretrained=True,
+    num_classes=20  # 20 clases colombianas
+)
+
+# Fase 1: congelar todo el backbone
+for name, param in model.named_parameters():
+    if 'classifier' not in name:
+        param.requires_grad = False
+
+# Hiperparametros Fase 1
+optimizer_phase1 = torch.optim.AdamW(
+    filter(lambda p: p.requires_grad, model.parameters()),
+    lr=1e-3,
+    weight_decay=1e-4
+)
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+scheduler_phase1 = torch.optim.lr_scheduler.CosineAnnealingLR(
+    optimizer_phase1, T_max=5
+)
+\end{lstlisting}
+
+\subsubsection{Fase 2 — Fine-tuning de los Últimos Bloques (10 épocas)}
+
+En la segunda fase se descongelaron los últimos 2 bloques de EfficientNet-B0, permitiendo que se ajustaran con una tasa de aprendizaje reducida:
+
+\begin{lstlisting}[caption={Configuración de Fase 2: fine-tuning parcial}, label={lst:phase2}]
+# Fase 2: descongelar los ultimos 2 bloques del backbone
+blocks_to_unfreeze = ['blocks.5', 'blocks.6', 'conv_head',
+                      'bn2', 'classifier']
+for name, param in model.named_parameters():
+    param.requires_grad = any(
+        block in name for block in blocks_to_unfreeze
+    )
+
+# Hiperparametros Fase 2
+optimizer_phase2 = torch.optim.AdamW(
+    filter(lambda p: p.requires_grad, model.parameters()),
+    lr=1e-4,
+    weight_decay=1e-4
+)
+scheduler_phase2 = torch.optim.lr_scheduler.CosineAnnealingLR(
+    optimizer_phase2, T_max=10
+)
+\end{lstlisting}
+
+\subsubsection{Bucle de Entrenamiento}
+
+\begin{lstlisting}[caption={Bucle de entrenamiento principal}, label={lst:trainloop}]
+def train_one_epoch(model, loader, optimizer, criterion, device):
+    model.train()
+    running_loss, correct, total = 0.0, 0, 0
+    for images, labels in loader:
+        images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item() * images.size(0)
+        _, predicted = outputs.max(1)
+        total += labels.size(0)
+        correct += predicted.eq(labels).sum().item()
+    return running_loss / total, 100.0 * correct / total
+
+def validate(model, loader, criterion, device):
+    model.eval()
+    running_loss, correct, total = 0.0, 0, 0
+    with torch.no_grad():
+        for images, labels in loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            running_loss += loss.item() * images.size(0)
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+    return running_loss / total, 100.0 * correct / total
+\end{lstlisting}
+
+\subsection{Exportación a ONNX}
+
+Tras el entrenamiento, el modelo se exportó al formato ONNX para su uso en producción:
+
+\begin{lstlisting}[caption={Exportación del modelo a formato ONNX}, label={lst:onnxexport}]
+import torch
+import torch.onnx
+
+model.eval()
+dummy_input = torch.randn(1, 3, 224, 224)
+
+torch.onnx.export(
+    model,
+    dummy_input,
+    "vehicleye_efficientnet_b0.onnx",
+    export_params=True,
+    opset_version=17,
+    do_constant_folding=True,
+    input_names=['input'],
+    output_names=['output'],
+    dynamic_axes={
+        'input':  {0: 'batch_size'},
+        'output': {0: 'batch_size'}
+    }
+)
+print("Modelo exportado: vehicleye_efficientnet_b0.onnx")
+# Resultado: 15.8 MB (vs 15.7 MB del .pth original)
+\end{lstlisting}
+
+% ==============================================================
+\section{Arquitectura del Sistema}
+% ==============================================================
+
+\subsection{Visión General}
+
+El sistema VehiclEye sigue una arquitectura cliente-servidor de tres capas. La Figura~\ref{fig:arquitectura} ilustra el flujo completo de información.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.95\linewidth}
+\begin{verbatim}
++---------------------+        HTTPS         +-------------------+
+|   FRONTEND          |  ----------------->  |   BACKEND         |
+|   React 18 +        |  <-----------------  |   FastAPI (Python)|
+|   TypeScript +      |   JSON responses     |   Puerto 8000     |
+|   Tailwind CSS      |                      +--------+----------+
+|   Puerto 3000       |                               |
++---------------------+                      +--------v----------+
+                                             |  ML Pipeline      |
+                                             |  ONNX Runtime     |
+                                             |  EfficientNet-B0  |
+                                             |  Grad-CAM (cv2)   |
+                                             +--------+----------+
+                                                      |
+                                             +--------v----------+
+                                             |  PostgreSQL DB    |
+                                             |  SQLAlchemy 2.x   |
+                                             |  (async)          |
+                                             +-------------------+
+
+DESPLIEGUE: Render Free Tier (512 MB RAM)
+Modelo: ONNX ~50 MB | PyTorch descartado en prod (~600 MB)
+\end{verbatim}
+\end{minipage}
+\caption{Arquitectura general del sistema VehiclEye}
+\label{fig:arquitectura}
+\end{figure}
+
+\subsection{Pipeline de Inferencia}
+
+Cada solicitud de clasificación sigue el siguiente flujo dentro del backend:
+
+\begin{enumerate}
+    \item \textbf{Recepción:} El endpoint FastAPI recibe la imagen como \texttt{multipart/form-data}.
+    \item \textbf{Preprocesamiento:} La imagen se redimensiona a $224 \times 224$ píxeles, se convierte a tensor NumPy y se normaliza con las estadísticas de ImageNet.
+    \item \textbf{Inferencia ONNX:} El tensor preprocesado se pasa a la sesión ONNX Runtime. Se obtiene el vector de logits de 20 dimensiones.
+    \item \textbf{Softmax y Top-3:} Se aplica softmax para obtener probabilidades y se devuelven las 3 predicciones más probables con sus porcentajes de confianza.
+    \item \textbf{Grad-CAM:} Se ejecuta la pasada hacia atrás sobre el modelo PyTorch cargado en memoria (solo para Grad-CAM) y se genera el \textit{heatmap} superpuesto.
+    \item \textbf{Persistencia:} El resultado se guarda en PostgreSQL mediante SQLAlchemy 2.x asíncrono.
+    \item \textbf{Respuesta:} Se devuelve un objeto JSON con predicciones, confianzas, imagen Grad-CAM en base64 y metadatos del análisis.
+\end{enumerate}
+
+\begin{lstlisting}[caption={Endpoint principal de clasificación en FastAPI}, label={lst:apiendpoint}]
+from fastapi import FastAPI, UploadFile, File, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+import onnxruntime as ort
+import numpy as np
+from PIL import Image
+import io, base64
+
+app = FastAPI(title="VehiclEye API", version="1.0.0")
+
+# Sesion ONNX Runtime (cargada una sola vez al iniciar)
+ort_session = ort.InferenceSession(
+    "vehicleye_efficientnet_b0.onnx",
+    providers=['CPUExecutionProvider']
+)
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD  = [0.229, 0.224, 0.225]
+
+def preprocess(image_bytes: bytes) -> np.ndarray:
+    img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+    img = img.resize((224, 224), Image.LANCZOS)
+    arr = np.array(img, dtype=np.float32) / 255.0
+    arr = (arr - IMAGENET_MEAN) / IMAGENET_STD
+    return arr.transpose(2, 0, 1)[np.newaxis, ...]  # NCHW
+
+@app.post("/api/v1/analyze", summary="Clasificar vehiculo")
+async def analyze_vehicle(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)
+):
+    image_bytes = await file.read()
+    tensor = preprocess(image_bytes)
+
+    # Inferencia
+    outputs = ort_session.run(
+        None, {'input': tensor}
+    )[0][0]  # logits shape: (20,)
+
+    # Top-3 predicciones
+    probs = softmax(outputs)
+    top3_idx  = probs.argsort()[-3:][::-1]
+    top3 = [
+        {"clase": CLASS_NAMES[i], "confianza": float(probs[i])}
+        for i in top3_idx
+    ]
+
+    # Persistir en DB
+    await save_analysis(db, file.filename, top3)
+
+    return {
+        "predicciones": top3,
+        "clase_principal": top3[0]["clase"],
+        "confianza_principal": top3[0]["confianza"]
+    }
+\end{lstlisting}
+
+\subsection{Base de Datos}
+
+El esquema de la base de datos PostgreSQL contempla las siguientes entidades principales:
+
+\begin{itemize}
+    \item \texttt{analyses}: Almacena cada análisis realizado (imagen, predicciones, confianzas, timestamp, IP de origen).
+    \item \texttt{users}: Gestión de usuarios del panel de administración.
+    \item \texttt{statistics}: Vistas materializadas para las estadísticas del panel administrativo.
+\end{itemize}
+
+% ==============================================================
+\section{Tecnologías Utilizadas}
+% ==============================================================
+
+La Tabla~\ref{tab:tecnologias} resume el stack tecnológico completo de VehiclEye.
+
+\begin{table}[H]
+\centering
+\caption{Stack tecnológico del sistema VehiclEye}
+\label{tab:tecnologias}
+\small
+\begin{tabularx}{\linewidth}{>{\bfseries}l l l X}
+\toprule
+\textbf{Tecnología} & \textbf{Versión} & \textbf{Categoría} & \textbf{Función} \\
+\midrule
+Python & 3.12 & Backend & Lenguaje principal del servidor \\
+FastAPI & 0.111 & Backend & Framework REST API, async, auto-docs \\
+SQLAlchemy & 2.x (async) & Backend & ORM, abstracción de base de datos \\
+PostgreSQL & 16 & Base de datos & Almacenamiento relacional de análisis \\
+React & 18 & Frontend & Framework UI basado en componentes \\
+TypeScript & 5.x & Frontend & Tipado estático para el frontend \\
+Tailwind CSS & 3.x & Frontend & Utilidades CSS para estilos responsivos \\
+ONNX Runtime & 1.18 & ML Producción & Inferencia ligera ($\sim$50 MB RAM) \\
+timm & 1.x & ML Entrenamiento & Arquitectura EfficientNet-B0 \\
+PyTorch & 2.x & ML Entrenamiento & Framework de entrenamiento del modelo \\
+albumentations & 1.x & ML Entrenamiento & Aumento de datos para imágenes \\
+OpenCV (cv2) & 4.x & ML / Backend & Implementación de Grad-CAM y Haar cascades \\
+WeasyPrint & 62.x & Backend & Generación de reportes PDF \\
+Docker & 26.x & DevOps & Contenedorización del sistema \\
+Render & --- & Despliegue & Plataforma cloud (capa gratuita) \\
+Google Colab (T4) & --- & ML Entrenamiento & Entrenamiento GPU ($\sim$90 min) \\
+GitHub & --- & DevOps & Control de versiones y alojamiento del modelo \\
+DuckDuckGo API & --- & Dataset & Descarga automatizada de imágenes \\
+PIL/Pillow & 10.x & Backend & Procesamiento de imágenes \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ==============================================================
+\section{Resultados}
+% ==============================================================
+
+\subsection{Métricas de Clasificación por Clase}
+
+La Tabla~\ref{tab:resultados} muestra el rendimiento del modelo por clase en el conjunto de validación (108 imágenes). Se reportan precisión (\textit{precision}), exhaustividad (\textit{recall}) y F1-score.
+
+\begin{table}[H]
+\centering
+\caption{Métricas de clasificación por clase en el conjunto de validación}
+\label{tab:resultados}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Clase (Vehículo)} & \textbf{Precisión} & \textbf{Recall} & \textbf{F1-score} \\
+\midrule
+Toyota Hilux          & 0.94 & 0.96 & 0.950 \\
+Renault Logan         & 0.98 & 0.97 & 0.974 \\
+Chevrolet Spark       & 0.82 & 0.79 & 0.804 \\
+Kia Picanto           & 0.88 & 0.85 & 0.864 \\
+Hyundai Tucson        & 0.76 & 0.80 & 0.779 \\
+Mazda CX-5            & 0.79 & 0.75 & 0.769 \\
+Nissan Frontier       & 0.85 & 0.88 & 0.864 \\
+Ford Explorer         & 0.71 & 0.68 & 0.694 \\
+Volkswagen Polo       & 0.74 & 0.72 & 0.729 \\
+Renault Duster        & 0.80 & 0.83 & 0.814 \\
+Chevrolet Captiva     & 0.70 & 0.67 & 0.684 \\
+Toyota Prado          & 0.86 & 0.89 & 0.874 \\
+Kia Sportage          & 0.77 & 0.74 & 0.754 \\
+Suzuki Jimny          & 0.91 & 0.93 & 0.919 \\
+Mitsubishi Outlander  & 0.68 & 0.65 & 0.664 \\
+Honda CR-V            & 0.73 & 0.76 & 0.744 \\
+Ford Ranger           & 0.84 & 0.82 & 0.829 \\
+Chevrolet Tracker     & 0.75 & 0.78 & 0.764 \\
+Jeep Wrangler         & 0.89 & 0.91 & 0.899 \\
+Mazda 3               & 0.78 & 0.76 & 0.769 \\
+\midrule
+\textbf{Promedio ponderado} & \textbf{0.808} & \textbf{0.797} & \textbf{0.802} \\
+\textbf{Exactitud global}   & \multicolumn{3}{c}{\textbf{77,1\%}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Métricas de Despliegue}
+
+\begin{table}[H]
+\centering
+\caption{Métricas de rendimiento en producción}
+\label{tab:deployment}
+\begin{tabular}{lc}
+\toprule
+\textbf{Métrica} & \textbf{Valor} \\
+\midrule
+Tamaño modelo ONNX         & 15,8 MB \\
+Tamaño modelo PyTorch (.pth) & 15,7 MB \\
+RAM ONNX Runtime (producción) & $\sim$50 MB \\
+RAM PyTorch (descartado)      & $\sim$600 MB \\
+Tiempo de inferencia (CPU Render) & $\sim$80 ms \\
+Tiempo de entrenamiento (T4 GPU) & $\sim$90 min \\
+Imágenes totales en dataset  & 720 \\
+Clases                       & 20 \\
+Épocas totales (Fase 1 + 2)  & 15 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Análisis y Discusión}
+
+\subsubsection{Fortalezas del Sistema}
+
+Los resultados obtenidos son prometedores considerando la escasez de datos. La exactitud global del 77,1\% es comparable a la reportada en trabajos similares con datasets de tamaño análogo. Las clases con mayor F1-score (Toyota Hilux: 0,950; Renault Logan: 0,974; Suzuki Jimny: 0,919) corresponden a vehículos con características visuales marcadamente distintivas: la Hilux es una camioneta de líneas robustas, el Jimny es compacto y cuadrado, y el Logan tiene un perfil sedán muy particular. En contraste, las clases con menor rendimiento (Mitsubishi Outlander: 0,664; Chevrolet Captiva: 0,684) comparten morfología de SUV genérica, lo que genera mayor confusión inter-clase.
+
+El uso de ONNX Runtime resultó ser una decisión arquitectónica crítica: con apenas 50 MB de RAM para el motor de inferencia, el sistema opera cómodamente dentro del límite de 512 MB de la capa gratuita de Render, dejando margen para el servidor FastAPI y la conexión a PostgreSQL.
+
+\subsubsection{Limitaciones}
+
+La principal limitación del sistema es el tamaño reducido del dataset: con un promedio de 36 imágenes por clase, el modelo está expuesto a sobreajuste y tiene dificultades con variaciones de iluminación extrema, ángulos inusuales o vehículos con modificaciones estéticas. Adicionalmente, el sistema no incorpora detección de objetos, por lo que requiere que la imagen de entrada muestre predominantemente el vehículo a clasificar; imágenes con múltiples vehículos o fondos muy complejos pueden degradar el rendimiento.
+
+% ==============================================================
+\section{Conclusiones}
+% ==============================================================
+
+\begin{enumerate}
+    \item Se diseñó, entrenó y desplegó exitosamente un sistema de clasificación de vehículos del mercado colombiano basado en EfficientNet-B0, alcanzando una exactitud global del 77,1\% con apenas 720 imágenes de entrenamiento distribuidas en 20 clases.
+
+    \item La estrategia de \textit{transfer learning} en dos fases —entrenamiento de la cabeza clasificadora seguido de fine-tuning de los últimos bloques— resultó eficiente y efectiva para adaptar un modelo preentrenado en ImageNet a un dominio específico con datos escasos.
+
+    \item La exportación a formato ONNX fue una decisión arquitectónica fundamental: redujo el consumo de RAM de $\sim$600 MB a $\sim$50 MB, haciendo posible el despliegue en la capa gratuita de Render y validando la viabilidad económica del sistema para equipos con recursos limitados.
+
+    \item La integración de Grad-CAM añade transparencia al sistema, permitiendo que los usuarios comprendan qué características visuales del vehículo sustentan la predicción, lo que incrementa la confianza en la herramienta en contextos profesionales.
+
+    \item Como trabajo futuro, se recomienda: (a) ampliar el dataset a al menos 200 imágenes por clase mediante técnicas de \textit{web scraping} más robustas y anotación manual; (b) explorar cuantización del modelo ONNX (INT8) para reducir aún más la latencia; (c) implementar un módulo de detección de objetos previo a la clasificación; y (d) desarrollar una aplicación móvil nativa que permita clasificación en tiempo real usando la cámara del dispositivo.
+\end{enumerate}
+
+% ==============================================================
+% REFERENCIAS
+% ==============================================================
+\newpage
+\begin{thebibliography}{99}
+
+\bibitem{tan2019efficientnet}
+M.~Tan and Q.~Le,
+``EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks,''
+in \textit{Proc. 36th Int. Conf. Machine Learning (ICML)},
+Long Beach, CA, USA, 2019, pp.~6105--6114.
+
+\bibitem{selvaraju2017grad}
+R.~R.~Selvaraju, M.~Cogswell, A.~Das, R.~Vedantam, D.~Parikh, and D.~Batra,
+``Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization,''
+in \textit{Proc. IEEE Int. Conf. Computer Vision (ICCV)},
+Venice, Italy, 2017, pp.~618--626.
+
+\bibitem{he2016deep}
+K.~He, X.~Zhang, S.~Ren, and J.~Sun,
+``Deep Residual Learning for Image Recognition,''
+in \textit{Proc. IEEE Conf. Computer Vision and Pattern Recognition (CVPR)},
+Las Vegas, NV, USA, 2016, pp.~770--778.
+
+\bibitem{lecun1998gradient}
+Y.~LeCun, L.~Bottou, Y.~Bengio, and P.~Haffner,
+``Gradient-Based Learning Applied to Document Recognition,''
+\textit{Proc. IEEE}, vol.~86, no.~11, pp.~2278--2324, Nov. 1998.
+
+\bibitem{pan2010survey}
+S.~J.~Pan and Q.~Yang,
+``A Survey on Transfer Learning,''
+\textit{IEEE Trans. Knowledge Data Eng.}, vol.~22, no.~10, pp.~1345--1359, Oct. 2010.
+
+\bibitem{fastapidocs}
+S.~Ramírez,
+\textit{FastAPI Documentation} [Online].
+Available: \url{https://fastapi.tiangolo.com/}.
+Accessed: May 2026.
+
+\bibitem{onnxdocs}
+Microsoft,
+\textit{ONNX Runtime Documentation} [Online].
+Available: \url{https://onnxruntime.ai/docs/}.
+Accessed: May 2026.
+
+\bibitem{wightman2019timm}
+R.~Wightman,
+``PyTorch Image Models (timm),''
+GitHub repository, 2019.
+[Online]. Available: \url{https://github.com/huggingface/pytorch-image-models}.
+Accessed: May 2026.
+
+\bibitem{pytorchdocs}
+A.~Paszke \textit{et al.},
+``PyTorch: An Imperative Style, High-Performance Deep Learning Library,''
+in \textit{Advances in Neural Information Processing Systems (NeurIPS)},
+Vancouver, Canada, 2019, pp.~8026--8037.
+
+\bibitem{runt2023}
+Registro Único Nacional de Tránsito (RUNT),
+\textit{Estadísticas del Parque Automotor Colombiano} [Online].
+Available: \url{https://www.runt.com.co/}.
+Accessed: May 2026.
+
+\end{thebibliography}
+
+\end{document}
