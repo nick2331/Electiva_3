@@ -9,8 +9,15 @@ Uso:
 """
 from __future__ import annotations
 
-import argparse
+import sys
 from pathlib import Path
+
+# Garantiza que el raíz del proyecto esté en sys.path (necesario en Colab)
+_root = Path(__file__).resolve().parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
+
+import argparse
 
 import torch
 import torch.nn as nn
@@ -101,14 +108,27 @@ def run_phase(model, train_loader, val_loader, epochs, lr, tag):
 
 def main(args):
     dataset = VehiclEyeDataset(args.data_dir, split="train")
-    val_size = max(1, int(len(dataset) * 0.15))
+    print(f"Dataset cargado: {len(dataset)} imágenes de {len(set(lbl for _, lbl in dataset.samples))} clases")
+
+    if len(dataset) < 10:
+        raise RuntimeError("Dataset demasiado pequeño (<10 imágenes). Descarga más imágenes primero.")
+
+    val_size   = max(1, int(len(dataset) * 0.15))
     train_size = len(dataset) - val_size
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
-    # Val usa transform de validación
     val_ds.dataset.split = "val"
 
-    train_loader = DataLoader(train_ds, batch_size=32, shuffle=True, num_workers=2, pin_memory=True)
-    val_loader   = DataLoader(val_ds,   batch_size=32, shuffle=False, num_workers=2, pin_memory=True)
+    # batch_size adaptativo y num_workers=0 para compatibilidad con Colab
+    batch_size  = min(32, max(4, train_size // 8))
+    num_workers = 0   # evita errores de multiprocessing en Colab
+    pin_memory  = torch.cuda.is_available()
+
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True,
+                              num_workers=num_workers, pin_memory=pin_memory)
+    val_loader   = DataLoader(val_ds,   batch_size=batch_size, shuffle=False,
+                              num_workers=num_workers, pin_memory=pin_memory)
+
+    print(f"batch_size={batch_size}  train={train_size}  val={val_size}  device={DEVICE}")
 
     model = build_model(NUM_CLASSES)
 
