@@ -34,8 +34,7 @@ def export(checkpoint: str, output: str):
         output,
         input_names=["input"],
         output_names=["logits"],
-        dynamic_axes={"input": {0: "batch"}, "logits": {0: "batch"}},
-        opset_version=17,
+        opset_version=18,
     )
     size_mb = Path(output).stat().st_size / 1024 / 1024
     print(f"Modelo exportado: {output}  ({size_mb:.1f} MB)")
