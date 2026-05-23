@@ -146,11 +146,18 @@ Responde SOLO el JSON, nada más."""
 
     resp = _post_groq(payload)
 
-    # Si falla con el modelo principal, intenta con el más pequeño
-    if not resp:
-        print(f"[Groq] Reintentando con llama-3.2-11b-vision-preview...")
-        payload["model"] = "llama-3.2-11b-vision-preview"
-        resp = _post_groq(payload)
+    # Si falla con el modelo principal, intenta con modelos alternativos
+    _vision_fallbacks = [
+        "llama-3.2-90b-vision-preview",
+        "llama-3.2-11b-vision-preview",
+    ]
+    for fb_model in _vision_fallbacks:
+        if not resp and fb_model != settings.groq_vision_model:
+            print(f"[Groq] Reintentando con {fb_model}...")
+            payload["model"] = fb_model
+            resp = _post_groq(payload)
+            if resp:
+                break
 
     if not resp:
         return None

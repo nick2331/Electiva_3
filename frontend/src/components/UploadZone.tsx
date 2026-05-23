@@ -31,12 +31,11 @@ function LoadingOverlay({ preview }: { preview: string | null }) {
       <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-2 text-primary font-semibold text-sm">
           <Loader2 size={16} className="animate-spin" />
-          Analizando con IA…
+          Analizando…
         </div>
         <div className="w-48 h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-primary to-primary-light rounded-full animate-shimmer bg-[length:200%_100%]" />
         </div>
-        <p className="text-xs text-gray-400">Puede tardar hasta 60 s en el primer uso</p>
       </div>
     </div>
   )

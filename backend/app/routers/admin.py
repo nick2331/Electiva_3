@@ -213,42 +213,76 @@ async def download_metrics():
 
 @router.get("/groq-test")
 async def groq_test(_: str = Depends(require_admin)):
-    """Prueba la conexión con Groq y devuelve el estado detallado."""
+    """Prueba la conexión con Groq: texto y visión por separado."""
     from app.config import settings as _s
-    import urllib.request, urllib.error, json
+    import urllib.request, urllib.error, json, base64
 
     key = getattr(_s, "groq_api_key", "")
     if not key:
         return {"configured": False, "error": "GROQ_API_KEY no configurada en Render"}
 
-    model = getattr(_s, "groq_vision_model", "llama-3.2-11b-vision-preview")
+    vision_model = getattr(_s, "groq_vision_model", "llama-3.2-11b-vision-preview")
+    text_model   = getattr(_s, "groq_text_model",   "llama-3.3-70b-versatile")
+    result = {"configured": True, "key_prefix": key[:8] + "...",
+              "vision_model": vision_model, "text_model": text_model}
 
-    # Prueba con un prompt de texto simple (sin imagen) para verificar conectividad
-    payload = {
-        "model": model,
+    def _call(payload: dict) -> dict:
+        body = json.dumps(payload).encode()
+        req = urllib.request.Request(
+            "https://api.groq.com/openai/v1/chat/completions",
+            data=body,
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read())
+                return {"ok": True, "reply": data["choices"][0]["message"]["content"].strip()}
+        except urllib.error.HTTPError as exc:
+            return {"ok": False, "http_error": exc.code, "detail": exc.read().decode(errors="ignore")[:400]}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    # 1. Text model test
+    result["text_test"] = _call({
+        "model": text_model,
         "messages": [{"role": "user", "content": "Responde solo: ok"}],
         "max_tokens": 5,
-    }
-    body = json.dumps(payload).encode()
-    req = urllib.request.Request(
-        "https://api.groq.com/openai/v1/chat/completions",
-        data=body,
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
-        method="POST",
+    })
+
+    # 2. Vision model test — imagen 1×1 pixel rojo en base64
+    tiny_red_jpg = (
+        "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8U"
+        "HRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgN"
+        "DRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy"
+        "MjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAAHCP/EABQQ"
+        "AQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAA"
+        "AAAAA/9oADAMBAAIRAxEAPwCwABmX/9k="
     )
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read())
-            reply = data["choices"][0]["message"]["content"]
-            return {
-                "configured": True,
-                "model": model,
-                "key_prefix": key[:8] + "...",
-                "response": reply,
-                "status": "OK - Groq conectado y funcionando",
-            }
-    except urllib.error.HTTPError as exc:
-        body_err = exc.read().decode(errors="ignore")
-        return {"configured": True, "model": model, "http_error": exc.code, "detail": body_err[:400]}
-    except Exception as exc:
-        return {"configured": True, "model": model, "error": str(exc)}
+    result["vision_test"] = _call({
+        "model": vision_model,
+        "messages": [{
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{tiny_red_jpg}"}},
+                {"type": "text", "text": "¿Qué color predomina? Responde en 2 palabras."},
+            ],
+        }],
+        "max_tokens": 10,
+    })
+
+    # 3. Fallback vision models
+    if not result["vision_test"]["ok"]:
+        for fb in ["llama-3.2-90b-vision-preview", "llama-3.2-11b-vision-preview"]:
+            if fb != vision_model:
+                fb_result = _call({
+                    "model": fb,
+                    "messages": [{"role": "user", "content": "Responde solo: ok"}],
+                    "max_tokens": 5,
+                })
+                result[f"fallback_{fb}"] = fb_result
+                if fb_result["ok"]:
+                    result["recommendation"] = f"Usa '{fb}' como groq_vision_model en Render"
+                    break
+
+    return result
