@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, DragEvent, ChangeEvent } from 'react'
+import { useRef, useState, useCallback, DragEvent } from 'react'
 import { UploadCloud, Camera, FileVideo, FileImage, X, Loader2, ScanLine } from 'lucide-react'
 
 interface Props {
