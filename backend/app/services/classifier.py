@@ -250,39 +250,21 @@ def _run_onnx(image_bytes: bytes) -> list[Prediction] | None:
 
 
 def predict_bytes(image_bytes: bytes) -> list[Prediction]:
-    # ── 1. Groq Vision como clasificador principal ─────────────────────────
-    try:
-        from app.services.groq_classifier import classify_with_groq
-        groq_result = classify_with_groq(image_bytes)
-    except Exception as exc:
-        print(f"[Groq] classify falló: {exc}")
-        groq_result = None
-
-    if groq_result is not None:
-        # [] significa "no es vehículo" según Groq
-        if groq_result == []:
-            return []
-        return [
-            Prediction(rank=p.rank, brand=p.brand, model=p.model,
-                       confidence=p.confidence)
-            for p in groq_result
-        ]
-
-    # ── 2. Filtro heurístico (Haar + piel) si Groq no está disponible ──────
+    # ── 1. Filtro heurístico (Haar + piel) ────────────────────────────────
     if _detect_non_vehicle(image_bytes):
         return []
 
-    # ── 3. ONNX como respaldo ───────────────────────────────────────────────
+    # ── 2. ONNX ────────────────────────────────────────────────────────────
     onnx_result = _run_onnx(image_bytes)
     if onnx_result is not None:
         return onnx_result
 
-    # ── 4. API externa (Hugging Face) ───────────────────────────────────────
+    # ── 3. API externa (Hugging Face) ───────────────────────────────────────
     ext = _try_external_api(image_bytes)
     if ext is not None:
         return ext
 
-    # ── 5. Demo aleatorio ───────────────────────────────────────────────────
+    # ── 4. Demo aleatorio ───────────────────────────────────────────────────
     return _demo_predictions()
 
 

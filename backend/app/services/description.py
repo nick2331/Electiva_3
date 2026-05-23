@@ -66,17 +66,6 @@ def build_description(predictions: list[Prediction], input_type: str) -> str:
 
     top = predictions[0]
 
-    # Intenta descripción enriquecida con Groq Text primero
-    try:
-        from app.services.groq_classifier import generate_description
-        top3 = [(p.brand, p.model, p.confidence) for p in predictions[:3]]
-        groq_desc = generate_description(top.brand, top.model, top.confidence, top3)
-        if groq_desc:
-            return groq_desc
-    except Exception:
-        pass
-
-    # Fallback: plantilla local
     body = _BODY_TYPE.get((top.brand, top.model), "vehículo de pasajeros")
     conf_pct = round(top.confidence * 100, 1)
     conf_text = _conf_label(top.confidence)
