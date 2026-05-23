@@ -136,6 +136,100 @@
     {\small \today}
 \end{titlepage}
 
+% ---- Nota para el evaluador / Guía de uso -------------------
+\thispagestyle{fancy}
+\newpage
+
+\begin{center}
+    {\large \bfseries Nota para el Evaluador --- Guía de Acceso y Reproducción}
+\end{center}
+\vspace{0.3cm}
+\hrule
+\vspace{0.5cm}
+
+\noindent Esta página resume cómo acceder al sistema, cómo compilar este documento y cómo
+reproducir el despliegue. El informe técnico comienza en la página siguiente.
+
+\vspace{0.5cm}
+
+% ---- Caja 1: App en producción ----
+\noindent\fbox{\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule}
+\vspace{0.3cm}
+\textbf{\large 1. Probar la aplicación (sin instalar nada)}\\[0.3cm]
+La aplicación está desplegada en Render y puede usarse directamente desde el
+navegador:
+
+\begin{center}
+\large\url{https://vehicleye-api.onrender.com}
+\end{center}
+
+\noindent\textbf{Nota:} El servicio está en la capa gratuita de Render. Si lleva más
+de 15 minutos sin visitas, entra en modo de suspensión. Al abrir el enlace, espere
+\textbf{30--60 segundos} mientras el servidor despierta; después responde con
+normalidad. El servicio no tiene fecha de expiración.
+
+\vspace{0.2cm}
+\textbf{Código fuente:}\\
+\url{https://github.com/nick2331/Electiva_3}
+\vspace{0.2cm}
+\end{minipage}}
+
+\vspace{0.5cm}
+
+% ---- Caja 2: Compilar este PDF ----
+\noindent\fbox{\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule}
+\vspace{0.3cm}
+\textbf{\large 2. Compilar este documento LaTeX (recomendado: Overleaf)}\\[0.3cm]
+\begin{enumerate}
+    \item Ingresar a \url{https://www.overleaf.com} y crear una cuenta gratuita.
+    \item Hacer clic en \textbf{New Project} $\to$ \textbf{Upload Project}.
+    \item Subir el archivo \texttt{informe\_vehicleye.tex} (este mismo archivo).
+    \item Overleaf compilará el PDF automáticamente. Si pide seleccionar compilador,
+          elegir \textbf{pdfLaTeX}.
+    \item Descargar el PDF con el botón \textbf{Download PDF} en la parte superior.
+\end{enumerate}
+\vspace{0.1cm}
+\textit{Alternativa local:} Si tiene \TeX{}Live o MiK\TeX{} instalado, ejecutar:
+\texttt{pdflatex informe\_vehicleye.tex} (dos veces para las referencias cruzadas).
+\vspace{0.2cm}
+\end{minipage}}
+
+\vspace{0.5cm}
+
+% ---- Caja 3: Despliegue propio en Render ----
+\noindent\fbox{\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule}
+\vspace{0.3cm}
+\textbf{\large 3. Desplegar una copia propia en Render (opcional)}\\[0.3cm]
+Si desea ejecutar su propia instancia del sistema en la nube (gratis):
+\begin{enumerate}
+    \item Crear una cuenta en \url{https://render.com} con GitHub.
+    \item Hacer \textit{fork} del repositorio
+          \texttt{github.com/nick2331/Electiva\_3}.
+    \item En Render $\to$ \textbf{New} $\to$ \textbf{Web Service} $\to$ conectar
+          el repositorio.
+    \item Configurar:
+          \begin{itemize}
+              \item \textbf{Root Directory:} \texttt{backend}
+              \item \textbf{Build Command:} \texttt{pip install -r requirements.txt}
+              \item \textbf{Start Command:} \texttt{uvicorn app.main:app --host 0.0.0.0 --port \$PORT}
+              \item \textbf{Plan:} Free
+          \end{itemize}
+    \item Agregar la variable de entorno:
+          \texttt{DATABASE\_URL} = URL de una base de datos PostgreSQL gratuita
+          (Render ofrece una en \textbf{New} $\to$ \textbf{PostgreSQL}).
+    \item Subir el modelo ONNX al repositorio en \texttt{backend/vehicleye.onnx}
+          o configurar \texttt{MODEL\_DOWNLOAD\_URL} con la URL pública del archivo
+          (GitHub Releases).
+    \item Hacer clic en \textbf{Deploy}. En 3--5 minutos el sistema estará activo.
+\end{enumerate}
+\vspace{0.2cm}
+\textit{El archivo \texttt{render.yaml} en la raíz del repositorio contiene la
+configuración completa lista para despliegue con un solo clic (\textit{Blueprint}).}
+\vspace{0.2cm}
+\end{minipage}}
+
+\newpage
+
 % ---- Resumen (Abstract) en dos columnas ----------------------
 \thispagestyle{fancy}
 \begin{center}
