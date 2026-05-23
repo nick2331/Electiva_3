@@ -62,6 +62,10 @@ def _post_groq(payload: dict, timeout: int = 20) -> dict | None:
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode(errors="ignore")
+        print(f"[Groq] HTTP {exc.code}: {body[:300]}")
+        return None
     except Exception as exc:
         print(f"[Groq] Error: {exc}")
         return None
@@ -78,8 +82,10 @@ def classify_with_groq(image_bytes: bytes) -> list[GroqPrediction] | None:
     Retorna [] si el modelo decide que la imagen NO es un vehículo.
     """
     if not settings.groq_api_key:
+        print("[Groq] GROQ_API_KEY no configurada.")
         return None
 
+    print(f"[Groq] Clasificando con {settings.groq_vision_model}...")
     b64 = _img_to_b64(image_bytes)
 
     vision_prompt = f"""Eres un experto en identificación de vehículos del mercado colombiano.

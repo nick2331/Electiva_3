@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     # Groq API para clasificación de vehículos por visión (principal)
     groq_api_key: str = ""
-    groq_vision_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
+    groq_vision_model: str = "llama-3.2-90b-vision-preview"
     groq_text_model: str = "llama-3.3-70b-versatile"
     groq_confidence_fallback: float = 0.50  # Si ONNX < 50%, confirma con Groq
 
