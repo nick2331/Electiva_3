@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["*"]
     model_download_url: str = ""
 
+    # Groq API para clasificación de vehículos por visión (principal)
+    groq_api_key: str = ""
+    groq_vision_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
+    groq_text_model: str = "llama-3.3-70b-versatile"
+    groq_confidence_fallback: float = 0.50  # Si ONNX < 50%, confirma con Groq
+
     # API externa para clasificar vehículos sin entrenar modelo propio.
     #   external_api_provider: "huggingface" | "imagenet" | ""  (vacío = desactivado)
     #   huggingface_token:     token gratuito de huggingface.co (opcional para imagenet)

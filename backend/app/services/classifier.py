@@ -227,28 +227,16 @@ def _try_external_api(image_bytes: bytes) -> list[Prediction] | None:
     ]
 
 
-def predict_bytes(image_bytes: bytes) -> list[Prediction]:
+def _run_onnx(image_bytes: bytes) -> list[Prediction] | None:
+    """Ejecuta inferencia ONNX. Retorna None si no hay sesión disponible."""
     sess = get_session()
-
-    # Filtro previo: descartar fotos de personas antes de clasificar.
-    if _detect_non_vehicle(image_bytes):
-        return []
-
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-
-    # Si no hay modelo ONNX local, intenta API externa (Hugging Face).
-    # Si la API tampoco está configurada, cae a predicciones demo.
     if sess is None:
-        ext = _try_external_api(image_bytes)
-        if ext is not None:
-            return ext
-        return _demo_predictions()
-
+        return None
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     tensor = _preprocess(img)
     input_name = sess.get_inputs()[0].name
     logits = sess.run(None, {input_name: tensor})[0][0]
     probs = _softmax(logits)
-
     top3_idx = np.argsort(probs)[::-1][:3]
     return [
         Prediction(
@@ -259,6 +247,43 @@ def predict_bytes(image_bytes: bytes) -> list[Prediction]:
         )
         for rank, idx in enumerate(top3_idx, start=1)
     ]
+
+
+def predict_bytes(image_bytes: bytes) -> list[Prediction]:
+    # ── 1. Groq Vision como clasificador principal ─────────────────────────
+    try:
+        from app.services.groq_classifier import classify_with_groq
+        groq_result = classify_with_groq(image_bytes)
+    except Exception as exc:
+        print(f"[Groq] classify falló: {exc}")
+        groq_result = None
+
+    if groq_result is not None:
+        # [] significa "no es vehículo" según Groq
+        if groq_result == []:
+            return []
+        return [
+            Prediction(rank=p.rank, brand=p.brand, model=p.model,
+                       confidence=p.confidence)
+            for p in groq_result
+        ]
+
+    # ── 2. Filtro heurístico (Haar + piel) si Groq no está disponible ──────
+    if _detect_non_vehicle(image_bytes):
+        return []
+
+    # ── 3. ONNX como respaldo ───────────────────────────────────────────────
+    onnx_result = _run_onnx(image_bytes)
+    if onnx_result is not None:
+        return onnx_result
+
+    # ── 4. API externa (Hugging Face) ───────────────────────────────────────
+    ext = _try_external_api(image_bytes)
+    if ext is not None:
+        return ext
+
+    # ── 5. Demo aleatorio ───────────────────────────────────────────────────
+    return _demo_predictions()
 
 
 def predict_pil(img: Image.Image) -> list[Prediction]:
