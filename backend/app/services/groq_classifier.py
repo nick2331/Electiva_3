@@ -71,8 +71,21 @@ def _post_groq(payload: dict, timeout: int = 20) -> dict | None:
         return None
 
 
-def _img_to_b64(image_bytes: bytes) -> str:
-    return base64.b64encode(image_bytes).decode()
+def _img_to_b64(image_bytes: bytes, max_px: int = 768) -> str:
+    """Redimensiona a max_px para reducir el payload y codifica en base64."""
+    try:
+        from PIL import Image
+        import io
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        w, h = img.size
+        if max(w, h) > max_px:
+            scale = max_px / max(w, h)
+            img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=85)
+        return base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        return base64.b64encode(image_bytes).decode()
 
 
 def classify_with_groq(image_bytes: bytes) -> list[GroqPrediction] | None:
@@ -132,6 +145,13 @@ Responde SOLO el JSON, nada más."""
     }
 
     resp = _post_groq(payload)
+
+    # Si falla con el modelo principal, intenta con el más pequeño
+    if not resp:
+        print(f"[Groq] Reintentando con llama-3.2-11b-vision-preview...")
+        payload["model"] = "llama-3.2-11b-vision-preview"
+        resp = _post_groq(payload)
+
     if not resp:
         return None
 

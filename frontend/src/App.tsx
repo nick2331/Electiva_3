@@ -6,36 +6,30 @@ import HistoryPage from './pages/HistoryPage'
 import AdminPage from './pages/AdminPage'
 
 function NavBar() {
-  const base = 'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors'
-  const active = 'bg-primary text-white'
-  const inactive = 'text-gray-600 hover:bg-gray-100'
+  const base = 'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200'
+  const active = 'bg-white/20 text-white shadow-sm'
+  const inactive = 'text-blue-100 hover:bg-white/10 hover:text-white'
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-gradient-to-r from-primary-dark via-primary to-primary-light sticky top-0 z-50 shadow-lg">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <NavLink to="/" className="flex items-center gap-2">
-          <Eye className="text-primary" size={22} />
-          <span className="font-bold text-primary text-lg tracking-tight">VehiclEye</span>
+        <NavLink to="/" className="flex items-center gap-2 group">
+          <div className="bg-white/20 rounded-lg p-1.5 group-hover:bg-white/30 transition-colors duration-200">
+            <Eye className="text-white" size={20} />
+          </div>
+          <span className="font-bold text-white text-lg tracking-tight">
+            Vehicl<span className="text-blue-200">Eye</span>
+          </span>
         </NavLink>
         <nav className="flex items-center gap-1">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `${base} ${isActive ? active : inactive}`}
-          >
-            <Eye size={16} /> Analizar
+          <NavLink to="/" end className={({ isActive }) => `${base} ${isActive ? active : inactive}`}>
+            <Eye size={15} /> Analizar
           </NavLink>
-          <NavLink
-            to="/historial"
-            className={({ isActive }) => `${base} ${isActive ? active : inactive}`}
-          >
-            <History size={16} /> Historial
+          <NavLink to="/historial" className={({ isActive }) => `${base} ${isActive ? active : inactive}`}>
+            <History size={15} /> Historial
           </NavLink>
-          <NavLink
-            to="/admin"
-            className={({ isActive }) => `${base} ${isActive ? active : inactive}`}
-          >
-            <LayoutDashboard size={16} /> Admin
+          <NavLink to="/admin" className={({ isActive }) => `${base} ${isActive ? active : inactive}`}>
+            <LayoutDashboard size={15} /> Admin
           </NavLink>
         </nav>
       </div>
@@ -46,15 +40,17 @@ function NavBar() {
 export default function App() {
   return (
     <BrowserRouter>
-      <NavBar />
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/resultado/:id" element={<ResultPage />} />
-          <Route path="/historial" element={<HistoryPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-        </Routes>
-      </main>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
+        <NavBar />
+        <main className="max-w-5xl mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/resultado/:id" element={<ResultPage />} />
+            <Route path="/historial" element={<HistoryPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+          </Routes>
+        </main>
+      </div>
     </BrowserRouter>
   )
 }
