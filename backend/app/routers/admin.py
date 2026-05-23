@@ -207,3 +207,48 @@ async def download_metrics():
             media = "application/pdf" if ext == ".pdf" else "text/plain"
             return FileResponse(str(p), media_type=media, filename=f"vehicleye_metrics{ext}")
     raise HTTPException(404, "Ejecute ml/evaluate.py para generar el reporte.")
+
+
+# ─── Groq Diagnostics ────────────────────────────────────────────────────────
+
+@router.get("/groq-test")
+async def groq_test(_: str = Depends(require_admin)):
+    """Prueba la conexión con Groq y devuelve el estado detallado."""
+    from app.config import settings as _s
+    import urllib.request, urllib.error, json
+
+    key = getattr(_s, "groq_api_key", "")
+    if not key:
+        return {"configured": False, "error": "GROQ_API_KEY no configurada en Render"}
+
+    model = getattr(_s, "groq_vision_model", "llama-3.2-11b-vision-preview")
+
+    # Prueba con un prompt de texto simple (sin imagen) para verificar conectividad
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": "Responde solo: ok"}],
+        "max_tokens": 5,
+    }
+    body = json.dumps(payload).encode()
+    req = urllib.request.Request(
+        "https://api.groq.com/openai/v1/chat/completions",
+        data=body,
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read())
+            reply = data["choices"][0]["message"]["content"]
+            return {
+                "configured": True,
+                "model": model,
+                "key_prefix": key[:8] + "...",
+                "response": reply,
+                "status": "OK - Groq conectado y funcionando",
+            }
+    except urllib.error.HTTPError as exc:
+        body_err = exc.read().decode(errors="ignore")
+        return {"configured": True, "model": model, "http_error": exc.code, "detail": body_err[:400]}
+    except Exception as exc:
+        return {"configured": True, "model": model, "error": str(exc)}
